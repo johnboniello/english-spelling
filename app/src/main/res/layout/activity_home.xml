@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/swipeRefresh"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+<ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="20dp">
+
+        <FrameLayout
+            android:layout_width="88dp"
+            android:layout_height="88dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/mascot_ring">
+
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:layout_gravity="center"
+                android:contentDescription="Mascot: the owl"
+                android:src="@drawable/mascot_owl" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="10dp"
+            android:paddingBottom="2dp"
+            android:text="Spelling"
+            android:textColor="@color/navy"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp"
+            android:text="Pick a game"
+            android:textColor="@color/ink_soft"
+            android:textSize="16sp" />
+
+        <Button
+            android:id="@+id/scrambleBtn"
+            style="@style/Widget.Dictee.Button.Blue"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="18dp"
+            android:text="🔤  Scrambled Letters"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/choiceBtn"
+            style="@style/Widget.Dictee.Button.Red"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="18dp"
+            android:text="🎯  Pick the Spelling"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/dictationBtn"
+            style="@style/Widget.Dictee.Button.Gold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="18dp"
+            android:text="✏️  Write the Word"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/reviewBtn"
+            style="@style/Widget.Dictee.Button.BluePale"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="16dp"
+            android:text="🔁  Words to review"
+            android:textSize="17sp"
+            android:visibility="gone" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="16dp"
+            android:background="@color/divider" />
+
+        <Button
+            android:id="@+id/wordsBtn"
+            style="@style/Widget.Dictee.Button.BluePale"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="📚  Manage Words" />
+
+        <Button
+            android:id="@+id/scanBtn"
+            style="@style/Widget.Dictee.Button.RedPale"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="📷  Scan a List (photo)" />
+
+        <TextView
+            android:id="@+id/countView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="16dp"
+            android:gravity="center"
+            android:text=""
+            android:textColor="@color/ink_soft"
+            android:textSize="14sp" />
+    </LinearLayout>
+</ScrollView>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

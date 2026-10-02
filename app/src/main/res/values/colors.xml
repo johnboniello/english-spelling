@@ -1,0 +1,48 @@
+<resources>
+    <!-- Same palette as Dictée FR (French tricolor + warm gold), kept so the two
+         apps feel like siblings. Soft, pale fills with dark same-hue text so a
+         kid's-app screen stays gentle but high-contrast. -->
+
+    <color name="bg_app">#EAF6FD</color>
+    <color name="navy">#042C53</color>
+    <color name="ink">#1A1A1A</color>
+    <color name="ink_soft">#5F6368</color>
+    <color name="white">#FFFFFF</color>
+    <color name="divider">#CFE3F5</color>
+
+    <!-- Action / accent colors kept for tints, action bar, etc. -->
+    <color name="blue">#1565C0</color>
+    <color name="blue_dark">#0D47A1</color>
+
+    <!-- Primary game buttons -->
+    <color name="tri_blue">#B5D4F4</color>
+    <color name="tri_blue_on">#042C53</color>
+    <color name="tri_red">#F7C1C1</color>
+    <color name="tri_red_on">#501313</color>
+    <color name="tri_gold">#FAC775</color>
+    <color name="tri_gold_on">#633806</color>
+
+    <!-- Secondary / utility buttons (paler, with a hairline border) -->
+    <color name="tri_blue_pale">#E6F1FB</color>
+    <color name="tri_blue_pale_stroke">#85B7EB</color>
+    <color name="tri_blue_pale_on">#0C447C</color>
+    <color name="tri_red_pale">#FCEBEB</color>
+    <color name="tri_red_pale_stroke">#F09595</color>
+    <color name="tri_red_pale_on">#791F1F</color>
+
+    <!-- Mascot ring -->
+    <color name="mascot_ring_bg">#FAEEDA</color>
+    <color name="mascot_ring_stroke">#EF9F27</color>
+
+    <!-- Surfaces -->
+    <color name="card_bg">#FFFFFF</color>
+    <color name="card_stroke">#CBD9EA</color>
+    <color name="board_bg">#F1F7FD</color>
+
+    <!-- Confetti / celebration -->
+    <color name="confetti_a">#1565C0</color>
+    <color name="confetti_b">#E23B3B</color>
+    <color name="confetti_c">#FAC775</color>
+    <color name="confetti_d">#FFFFFF</color>
+    <color name="confetti_e">#85B7EB</color>
+</resources>

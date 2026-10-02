@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_words"
+        android:title="Manage Words" />
+    <item
+        android:id="@+id/action_rate"
+        android:title="Voice speed" />
+</menu>

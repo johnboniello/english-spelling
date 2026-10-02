@@ -1,0 +1,4 @@
+<resources>
+    <!-- Debug builds install beside the Play Store copy, so label them distinctly. -->
+    <string name="app_name">Spelling TEST</string>
+</resources>

@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <TextView
+        android:id="@+id/progressView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:textSize="15sp"
+        android:textStyle="bold" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/listenBtn"
+            style="@style/Widget.Dictee.Button.Blue"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="🔊  Listen" />
+
+        <Button
+            android:id="@+id/slowBtn"
+            style="@style/Widget.Dictee.Button.BluePale"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:contentDescription="Listen slowly"
+            android:minWidth="0dp"
+            android:text="🐢" />
+
+        <Button
+            android:id="@+id/hintBtn"
+            style="@style/Widget.Dictee.Button.Gold"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="💡  Hint" />
+
+        <Button
+            android:id="@+id/spellBtn"
+            style="@style/Widget.Dictee.Button.BluePale"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:text="🔊  Spell" />
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/board"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:minHeight="320dp"
+        android:background="@drawable/board_bg" />
+
+    <TextView
+        android:id="@+id/feedbackView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="8dp"
+        android:paddingBottom="4dp"
+        android:text=""
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/nextBtn"
+        style="@style/Widget.Dictee.Button.Blue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="➡️  Next word"
+        android:visibility="gone" />
+</LinearLayout>
