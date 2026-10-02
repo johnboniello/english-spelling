@@ -26,7 +26,7 @@ The web version lives in `johnboniello.github.io/src/spelling/` (served at
 | Letter names | "a", "espace", "trait d'union" | capitals ("A" is read "ay", lowercase "a" as "uh"), "space", "hyphen" |
 | Keyboard | a–z + accents, œ, ç | a–z, `'`, `-`, space |
 | Wrong choices (`SpellingVariants.kt`) | accents, French endings (er/é/ez, eau/au…) | vowel teams (ie/ei, ee/ea…), silent letters (kn, wr, gh, final e), doubled consonants, endings (tion/sion, le/el, y/ey…), c/k, s/z |
-| Mascot | rooster | owl (placeholder emoji art) |
+| Mascot | rooster | owl (Noto Emoji, Apache 2.0, rendered from its SVG) |
 | Package | `com.johnb.frenchspelling` | `com.johnb.englishspelling` |
 
 ## Sync
