@@ -21,8 +21,8 @@ android {
         applicationId = "com.johnb.englishspelling"
         minSdk = 26
         targetSdk = 36
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         // The bundled OCR model ships native libs for every ABI; real phones are ARM.
         // Dropping x86/x86_64 roughly halves the APK. (Re-add them for an emulator.)
@@ -85,6 +85,8 @@ dependencies {
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     // On-device OCR for the "scan a word list" feature (bundled model, works offline).
     implementation("com.google.mlkit:text-recognition:16.0.1")
+    // Play In-App Updates: offers a new Play Store version from inside the app.
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
 
     testImplementation("junit:junit:4.13.2")
 }

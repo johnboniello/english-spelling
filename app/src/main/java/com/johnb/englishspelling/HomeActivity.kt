@@ -16,6 +16,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var reviewBtn: Button
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private var syncing = false
+    private lateinit var update: InAppUpdate
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,12 +36,21 @@ class HomeActivity : AppCompatActivity() {
         findViewById<Button>(R.id.wordsBtn).setOnClickListener { open(WordListActivity::class.java) }
         findViewById<Button>(R.id.scanBtn).setOnClickListener { open(ScanActivity::class.java) }
         reviewBtn.setOnClickListener { chooseReviewGame() }
+
+        update = InAppUpdate(this)
+        update.checkForUpdate()
+    }
+
+    override fun onDestroy() {
+        update.stop()
+        super.onDestroy()
     }
 
     override fun onResume() {
         super.onResume()
         refreshCounts()
         sync(force = false)
+        update.resume()
     }
 
     private fun refreshCounts() {
