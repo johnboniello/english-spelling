@@ -29,6 +29,11 @@ class ScrambleActivity : AppCompatActivity() {
         var homeY = 0f
         var slotIndex = -1
         var locked = false
+        // Per tile, so two fingers dragging two tiles don't share one origin.
+        var downX = 0f
+        var downY = 0f
+        var startX = 0f
+        var startY = 0f
     }
 
     private lateinit var store: WordStore
@@ -59,11 +64,8 @@ class ScrambleActivity : AppCompatActivity() {
 
     private val reviewMode by lazy { intent.getBooleanExtra(HomeActivity.EXTRA_REVIEW, false) }
 
-    private var dragTile: Tile? = null
-    private var downX = 0f
-    private var downY = 0f
-    private var startX = 0f
-    private var startY = 0f
+    /** The one pending "is the board right?" check, so quick moves don't queue several. */
+    private val pendingCheck = Runnable { checkSolution() }
 
     private val green = 0xFF2E7D32.toInt()
     private val red = 0xFFC62828.toInt()
@@ -74,6 +76,9 @@ class ScrambleActivity : AppCompatActivity() {
         private const val KEY_POS = "state_pos"
         private const val KEY_SCORE = "state_score"
         private const val KEY_AIDED = "state_aided"
+        private const val KEY_SOLVED = "state_solved"
+        private const val KEY_WRONG = "state_wrong"
+        private const val KEY_HINTED = "state_hinted"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -155,6 +160,11 @@ class ScrambleActivity : AppCompatActivity() {
             outState.putInt(KEY_POS, pos)
             outState.putInt(KEY_SCORE, score)
             outState.putInt(KEY_AIDED, aided)
+            // Without these a rotation forgets a wrong try (the miss never
+            // reaches "Words to review") and re-asks a solved word (scored twice).
+            outState.putBoolean(KEY_SOLVED, solvedThisWord)
+            outState.putBoolean(KEY_WRONG, wrongThisWord)
+            outState.putBoolean(KEY_HINTED, hintUsedThisWord)
         }
     }
 
@@ -173,7 +183,34 @@ class ScrambleActivity : AppCompatActivity() {
         pos = savedPos
         score = state.getInt(KEY_SCORE, 0)
         aided = state.getInt(KEY_AIDED, 0)
-        board.post { setupRound() }
+        val solved = state.getBoolean(KEY_SOLVED, false)
+        val wrong = state.getBoolean(KEY_WRONG, false)
+        val hinted = state.getBoolean(KEY_HINTED, false)
+        board.post {
+            setupRound()
+            wrongThisWord = wrong
+            hintUsedThisWord = hinted
+            if (solved) showSolved()
+        }
+    }
+
+    /** Puts every tile in its slot and marks the word solved, without scoring or recording it. */
+    private fun showSolved() {
+        solvedThisWord = true
+        val free = tiles.toMutableList()
+        for (i in slotChars.indices) {
+            val t = free.firstOrNull { sameLetter(it.letter, slotChars[i]) } ?: continue
+            free.remove(t)
+            t.slotIndex = i
+            slotFilledBy[i] = t
+            t.locked = true
+            t.view.setBackgroundResource(R.drawable.tile_correct)
+            t.view.x = slotRects[i].left.toFloat()
+            t.view.y = slotRects[i].top.toFloat()
+        }
+        feedbackView.setTextColor(green)
+        feedbackView.text = if (hintUsedThisWord) "Great job! (with help)" else "Great job! 🎉"
+        nextBtn.visibility = View.VISIBLE
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -192,6 +229,7 @@ class ScrambleActivity : AppCompatActivity() {
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setupRound() {
+        board.removeCallbacks(pendingCheck)
         board.removeAllViews()
         slotRects.clear()
         slotFilledBy.clear()
@@ -296,11 +334,10 @@ class ScrambleActivity : AppCompatActivity() {
         if (tile.locked || solvedThisWord) return@OnTouchListener false
         when (e.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                dragTile = tile
-                downX = e.rawX
-                downY = e.rawY
-                startX = v.x
-                startY = v.y
+                tile.downX = e.rawX
+                tile.downY = e.rawY
+                tile.startX = v.x
+                tile.startY = v.y
                 v.bringToFront()
                 v.animate().scaleX(1.12f).scaleY(1.12f).setDuration(80).start()
                 if (tile.slotIndex >= 0) {
@@ -310,14 +347,13 @@ class ScrambleActivity : AppCompatActivity() {
                 true
             }
             MotionEvent.ACTION_MOVE -> {
-                v.x = startX + (e.rawX - downX)
-                v.y = startY + (e.rawY - downY)
+                v.x = tile.startX + (e.rawX - tile.downX)
+                v.y = tile.startY + (e.rawY - tile.downY)
                 true
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 v.animate().scaleX(1f).scaleY(1f).setDuration(80).start()
                 dropTile(tile)
-                dragTile = null
                 true
             }
             else -> false
@@ -345,7 +381,7 @@ class ScrambleActivity : AppCompatActivity() {
             animateTo(tile.view, r.left.toFloat(), r.top.toFloat())
             val full = slotFilledBy.all { it != null }
             announcePlacement(best, tile.letter)
-            if (full) board.postDelayed({ checkSolution() }, 700)
+            if (full) scheduleCheck()
         } else {
             animateTo(tile.view, tile.homeX, tile.homeY)
         }
@@ -402,11 +438,19 @@ class ScrambleActivity : AppCompatActivity() {
         val full = slotFilledBy.all { it != null }
         announcePlacement(k, want)
         hintUsedThisWord = true
-        if (full) board.postDelayed({ checkSolution() }, 700)
+        if (full) scheduleCheck()
+    }
+
+    private fun scheduleCheck() {
+        board.removeCallbacks(pendingCheck)
+        board.postDelayed(pendingCheck, 700)
     }
 
     private fun checkSolution() {
-        if (solvedThisWord) return
+        // The check runs 0.7 s after the last slot fills. If she has picked a
+        // tile back up since, the word isn't finished: judging it now would
+        // say "Not quite" and record a miss she never made.
+        if (solvedThisWord || slotFilledBy.any { it == null }) return
         val allRight = slotChars.indices.all { i ->
             val placed = slotFilledBy[i]?.letter
             placed != null && sameLetter(placed, slotChars[i])

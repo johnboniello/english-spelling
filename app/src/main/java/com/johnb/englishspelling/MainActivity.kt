@@ -78,6 +78,12 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_SCORE = "state_score"
         private const val KEY_AIDED = "state_aided"
         private const val KEY_GUESS = "state_guess"
+        private const val KEY_ATTEMPTS = "state_attempts"
+        private const val KEY_REVEAL_COUNT = "state_reveal_count"
+        private const val KEY_AIDED_WORD = "state_aided_word"
+        private const val KEY_REVEALED = "state_revealed"
+        private const val KEY_SCORED = "state_scored"
+        private const val KEY_RECORDED = "state_recorded"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -187,6 +193,15 @@ class MainActivity : AppCompatActivity() {
             outState.putInt(KEY_SCORE, score)
             outState.putInt(KEY_AIDED, aidedCount)
             outState.putString(KEY_GUESS, guess.toString())
+            // Per-word state: without it a rotation forgets the wrong tries (so
+            // a missed word is recorded as a clean pass and skips "Words to
+            // review") and lets an already-solved word score again.
+            outState.putInt(KEY_ATTEMPTS, attempts)
+            outState.putInt(KEY_REVEAL_COUNT, revealCount)
+            outState.putBoolean(KEY_AIDED_WORD, aidedThisWord)
+            outState.putBoolean(KEY_REVEALED, answerRevealed)
+            outState.putBoolean(KEY_SCORED, scoredThisWord)
+            outState.putBoolean(KEY_RECORDED, recordedThisWord)
         }
     }
 
@@ -211,6 +226,13 @@ class MainActivity : AppCompatActivity() {
         emptyAddBtn.visibility = View.GONE
         practiceBox.visibility = View.VISIBLE
         render()
+        attempts = state.getInt(KEY_ATTEMPTS, 0)
+        revealCount = state.getInt(KEY_REVEAL_COUNT, 0)
+        aidedThisWord = state.getBoolean(KEY_AIDED_WORD, false)
+        answerRevealed = state.getBoolean(KEY_REVEALED, false)
+        scoredThisWord = state.getBoolean(KEY_SCORED, false)
+        recordedThisWord = state.getBoolean(KEY_RECORDED, false)
+        updateHintView()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

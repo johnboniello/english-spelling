@@ -53,19 +53,30 @@
             android:inputType="textMultiLine|textNoSuggestions"
             android:minLines="6" />
 
+        <TextView
+            android:id="@+id/countText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="4dp"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <!-- New week first: scanning is almost always this week's whole list.
+             "Add" appends to the current list, so it is the secondary action. -->
         <Button
-            android:id="@+id/addBtn"
+            android:id="@+id/replaceBtn"
             style="@style/Widget.Dictee.Button.Gold"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Add to the list" />
+            android:text="🗓️  New week (replace the list)" />
 
         <Button
-            android:id="@+id/replaceBtn"
+            android:id="@+id/addBtn"
+            style="@style/Widget.Dictee.Button.BluePale"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="New week (replace)" />
+            android:text="➕  Add to this week's list" />
     </LinearLayout>
 </ScrollView>

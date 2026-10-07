@@ -101,20 +101,16 @@ class WordListActivity : AppCompatActivity() {
             return
         }
         if (replace) {
+            val uniq = ArrayList<String>()
+            val seen = HashSet<String>()
+            for (p in parts) if (seen.add(p.lowercase())) uniq.add(p)
             AlertDialog.Builder(this)
                 .setTitle("New week")
-                .setMessage("Replace the list with these ${parts.size} words?\n\n“Words to review” are kept.")
+                .setMessage("Replace the list with these ${uniq.size} words?\n\n“Words to review” are kept.")
                 .setPositiveButton("Replace") { _, _ ->
-                    Stats.prune(store)
-                    store.clearDeletedWords()
-                    val uniq = ArrayList<String>()
-                    val seen = HashSet<String>()
-                    for (p in parts) if (seen.add(p.lowercase())) uniq.add(p)
-                    items.clear()
-                    items.addAll(uniq)
-                    store.replaceWords(uniq)
+                    store.startNewWeek(uniq)
+                    reload()
                     input.setText("")
-                    redraw()
                     renderReview()
                     AlertDialog.Builder(this)
                         .setMessage("New list: ${uniq.size} words.\nWords to review: ${Stats.dueCount(store)}.")
@@ -125,24 +121,23 @@ class WordListActivity : AppCompatActivity() {
                 .show()
             return
         }
-        var added = 0
-        for (p in parts) {
-            if (items.none { it.equals(p, ignoreCase = true) }) {
-                items.add(p)
-                added++
-            }
-            store.unmarkDeleted(p)
-        }
-        store.save(items)
+        val added = store.addWords(parts)
+        reload()
         input.setText("")
-        redraw()
         toast(if (added == 0) "Those words are already in the list." else "$added word(s) added.")
     }
 
-    private fun removeAt(index: Int) {
-        val word = items.removeAt(index)
-        store.save(items)
-        store.markDeleted(word)
+    // Edits go to the stored list, not `items`: a background sync may have
+    // saved a newer list since this screen last drew, and writing back the
+    // stale copy would undo it.
+    private fun remove(word: String) {
+        store.deleteWord(word)
+        reload()
+    }
+
+    private fun reload() {
+        items.clear()
+        items.addAll(store.words())
         redraw()
     }
 
@@ -153,9 +148,7 @@ class WordListActivity : AppCompatActivity() {
             else -> "${items.size} words"
         }
         listContainer.removeAllViews()
-        items.forEachIndexed { index, word ->
-            listContainer.addView(wordRow(word, deletable = true, index = index))
-        }
+        for (word in items) listContainer.addView(wordRow(word))
     }
 
     private fun renderReview() {
@@ -177,7 +170,7 @@ class WordListActivity : AppCompatActivity() {
         )
     }
 
-    private fun wordRow(word: String, deletable: Boolean, index: Int): View {
+    private fun wordRow(word: String): View {
         val row = rowFrame()
         row.addView(TextView(this).apply {
             text = word
@@ -185,13 +178,11 @@ class WordListActivity : AppCompatActivity() {
             layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
         })
         row.addView(pinButton(word))
-        if (deletable) {
-            row.addView(Button(this).apply {
-                text = "Delete"
-                isAllCaps = false
-                setOnClickListener { removeAt(index) }
-            })
-        }
+        row.addView(Button(this).apply {
+            text = "Delete"
+            isAllCaps = false
+            setOnClickListener { remove(word) }
+        })
         return row
     }
 
@@ -326,9 +317,7 @@ class WordListActivity : AppCompatActivity() {
             swipeRefresh.isRefreshing = false
             when (result) {
                 is Sync.Result.Ok -> {
-                    items.clear()
-                    items.addAll(store.words())
-                    redraw()
+                    reload()
                     renderReview()
                     setSyncStatus(result.message)
                 }

@@ -107,10 +107,14 @@ object Sync {
             val local: List<String>
             val localDeleted: List<String>
             val localRep: Long
+            val pendingDel: List<String>
+            val pendingUndel: List<String>
             synchronized(WordStore.LOCK) {
                 local = store.words()
                 localDeleted = store.deletedWords()
                 localRep = store.wordsReplacedAt()
+                pendingDel = store.pendingDeleted()
+                pendingUndel = store.pendingUndeleted()
             }
             httpPut("$SYNC_BASE_URL/list/$SERVER_PREFIX$code", JSONObject().apply {
                 put("words", JSONArray(local))
@@ -118,6 +122,7 @@ object Sync {
                 put("updatedAt", now)
                 put("replacedAt", localRep)
             })
+            store.clearJournal(pendingDel, pendingUndel)
             return "sent ${local.size} word(s)"
         }
 
@@ -129,11 +134,15 @@ object Sync {
         val merged: List<String>
         val mergedDeleted: List<String>
         val replacedAt: Long
+        val pendingDel: List<String>
+        val pendingUndel: List<String>
         var adopted = false
         synchronized(WordStore.LOCK) {
             local = store.words()
             val localRep = store.wordsReplacedAt()
             val localDeleted = store.deletedWords()
+            pendingDel = store.pendingDeleted()
+            pendingUndel = store.pendingUndeleted()
             when {
                 remoteRep > localRep -> {        // other device started a new week: adopt it whole
                     merged = remoteWords
@@ -146,9 +155,13 @@ object Sync {
                     mergedDeleted = localDeleted
                     replacedAt = localRep
                 }
-                else -> {                        // same generation -> union, minus anything either
-                                                  // device has explicitly deleted since
-                    mergedDeleted = union(localDeleted, remoteDeleted)
+                else -> {                        // same generation -> union, minus what's deleted.
+                    // The server's tombstones are the shared truth; on top of them go
+                    // the deletes made here since the last sync, and out come the
+                    // words re-added here. A stale local tombstone no longer counts,
+                    // so a word re-added on any device stays added everywhere.
+                    val undeletedKeys = pendingUndel.map { it.lowercase() }.toHashSet()
+                    mergedDeleted = union(remoteDeleted.filter { it.lowercase() !in undeletedKeys }, pendingDel)
                     val deletedKeys = mergedDeleted.map { it.lowercase() }.toHashSet()
                     merged = union(local, remoteWords).filter { it.lowercase() !in deletedKeys }
                     replacedAt = localRep
@@ -164,6 +177,9 @@ object Sync {
             put("updatedAt", now)
             put("replacedAt", replacedAt)
         })
+        // The server has it now. (Adopting another device's new week also
+        // retires this device's journal: those edits were to last week's list.)
+        store.clearJournal(pendingDel, pendingUndel)
 
         if (adopted) return "new list: ${merged.size} word(s)"
         val received = merged.count { w -> local.none { it.equals(w, ignoreCase = true) } }

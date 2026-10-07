@@ -50,6 +50,8 @@ class ChoiceActivity : AppCompatActivity() {
         private const val KEY_POS = "state_pos"
         private const val KEY_SCORE = "state_score"
         private const val KEY_AIDED = "state_aided"
+        private const val KEY_SOLVED = "state_solved"
+        private const val KEY_WRONG = "state_wrong"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -129,6 +131,10 @@ class ChoiceActivity : AppCompatActivity() {
             outState.putInt(KEY_POS, pos)
             outState.putInt(KEY_SCORE, score)
             outState.putInt(KEY_AIDED, aided)
+            // Without these a rotation forgets a wrong pick (the miss never
+            // reaches "Words to review") and re-asks a solved word (scored twice).
+            outState.putBoolean(KEY_SOLVED, solved)
+            outState.putBoolean(KEY_WRONG, wrongThisWord)
         }
     }
 
@@ -150,6 +156,8 @@ class ChoiceActivity : AppCompatActivity() {
         aided = state.getInt(KEY_AIDED, 0)
         showEmpty(false)
         setupRound()
+        wrongThisWord = state.getBoolean(KEY_WRONG, false)
+        if (state.getBoolean(KEY_SOLVED, false)) showSolved()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -201,22 +209,27 @@ class ChoiceActivity : AppCompatActivity() {
         if (ttsReady) speakWord()
     }
 
+    /** Marks the current word solved on screen, without scoring or recording it. */
+    private fun showSolved() {
+        solved = true
+        options[correctIndex].backgroundTintList = ColorStateList.valueOf(green)
+        options[correctIndex].setTextColor(onStrong)
+        for (b in options) b.isEnabled = false
+        feedbackView.setTextColor(green)
+        feedbackView.text = if (wrongThisWord) "Great job! (with help)" else "Great job! 🎉"
+        nextBtn.visibility = View.VISIBLE
+    }
+
     private fun onPick(i: Int) {
         if (solved || !options[i].isEnabled) return
         if (i == correctIndex) {
-            solved = true
-            options[i].backgroundTintList = ColorStateList.valueOf(green)
-            options[i].setTextColor(onStrong)
-            for (b in options) b.isEnabled = false
-            feedbackView.setTextColor(green)
-            feedbackView.text = if (wrongThisWord) "Great job! (with help)" else "Great job! 🎉"
+            showSolved()
             if (wrongThisWord) aided++ else score++
             progressView.text = "Word ${pos + 1} / ${order.size}     Score: $score" +
                 (if (aided > 0) "   ·   with help: $aided" else "")
             Stats.record(store, currentWord(), wrongThisWord)
             Feedback.correct(this, tts, ttsReady)
             Celebrate.correct(this)
-            nextBtn.visibility = View.VISIBLE
         } else {
             wrongThisWord = true
             options[i].isEnabled = false
