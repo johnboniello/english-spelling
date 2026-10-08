@@ -108,6 +108,14 @@
                 android:text="🧹  Remove mastered words" />
         </LinearLayout>
 
+        <Button
+            android:id="@+id/limitsBtn"
+            style="@style/Widget.Dictee.Button.BluePale"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="🔒  Parental controls" />
+
         <LinearLayout
             android:id="@+id/syncCard"
             android:layout_width="match_parent"

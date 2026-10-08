@@ -54,6 +54,7 @@ class WordListActivity : AppCompatActivity() {
         findViewById<Button>(R.id.scanBtn).setOnClickListener {
             startActivity(Intent(this, ScanActivity::class.java))
         }
+        findViewById<Button>(R.id.limitsBtn).setOnClickListener { PlayLimit.settingsDialog(this, store) }
         findViewById<Button>(R.id.reviewCleanBtn).setOnClickListener {
             val n = Stats.clearMastered(store)
             renderReview()

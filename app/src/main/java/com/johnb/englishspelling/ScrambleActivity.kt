@@ -61,6 +61,7 @@ class ScrambleActivity : AppCompatActivity() {
     private var hintUsedThisWord = false
     private var wrongThisWord = false
     private var solvedThisWord = false
+    private val charge by lazy { RoundCharge(store, PlayLimit.Game.SCRAMBLE) }
 
     private val reviewMode by lazy { intent.getBooleanExtra(HomeActivity.EXTRA_REVIEW, false) }
 
@@ -132,6 +133,15 @@ class ScrambleActivity : AppCompatActivity() {
                 order = mutableListOf()
                 return
             }
+            if (charge.blocked()) {
+                board.removeAllViews()
+                progressView.text = ""
+                feedbackView.setTextColor(0xFF1A1A1A.toInt())
+                feedbackView.text = PlayLimit.blockedText(store, PlayLimit.Game.SCRAMBLE)
+                nextBtn.visibility = View.GONE
+                order = mutableListOf()
+                return
+            }
             order = MutableList(words.size) { it }
             order.shuffle()
             pos = 0
@@ -165,6 +175,7 @@ class ScrambleActivity : AppCompatActivity() {
             outState.putBoolean(KEY_SOLVED, solvedThisWord)
             outState.putBoolean(KEY_WRONG, wrongThisWord)
             outState.putBoolean(KEY_HINTED, hintUsedThisWord)
+            charge.save(outState)
         }
     }
 
@@ -183,6 +194,7 @@ class ScrambleActivity : AppCompatActivity() {
         pos = savedPos
         score = state.getInt(KEY_SCORE, 0)
         aided = state.getInt(KEY_AIDED, 0)
+        charge.restore(state)
         val solved = state.getBoolean(KEY_SOLVED, false)
         val wrong = state.getBoolean(KEY_WRONG, false)
         val hinted = state.getBoolean(KEY_HINTED, false)
@@ -451,6 +463,7 @@ class ScrambleActivity : AppCompatActivity() {
         // tile back up since, the word isn't finished: judging it now would
         // say "Not quite" and record a miss she never made.
         if (solvedThisWord || slotFilledBy.any { it == null }) return
+        charge.charge()
         val allRight = slotChars.indices.all { i ->
             val placed = slotFilledBy[i]?.letter
             placed != null && sameLetter(placed, slotChars[i])
@@ -492,19 +505,15 @@ class ScrambleActivity : AppCompatActivity() {
 
     private fun nextWord() {
         if (pos + 1 >= order.size) {
-            AlertDialog.Builder(this)
-                .setTitle("All done!")
-                .setMessage("Without help: $score / ${order.size}\nWith help: $aided")
-                .setPositiveButton("Play again") { _, _ ->
-                    order.shuffle()
-                    pos = 0
-                    score = 0
-                    aided = 0
-                    setupRound()
-                }
-                .setNegativeButton("Back", null)
-                .setCancelable(false)
-                .show()
+            PlayLimit.showEndDialog(this, store, PlayLimit.Game.SCRAMBLE, "All done!",
+                "Without help: $score / ${order.size}\nWith help: $aided", "Back") {
+                charge.reset()
+                order.shuffle()
+                pos = 0
+                score = 0
+                aided = 0
+                setupRound()
+            }
             return
         }
         pos++

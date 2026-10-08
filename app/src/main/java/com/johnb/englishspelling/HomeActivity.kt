@@ -14,6 +14,7 @@ class HomeActivity : AppCompatActivity() {
     private lateinit var store: WordStore
     private lateinit var countView: TextView
     private lateinit var reviewBtn: Button
+    private val gameButtons = LinkedHashMap<PlayLimit.Game, Button>()
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private var syncing = false
     private lateinit var update: InAppUpdate
@@ -33,9 +34,16 @@ class HomeActivity : AppCompatActivity() {
         findViewById<Button>(R.id.scrambleBtn).setOnClickListener { open(ScrambleActivity::class.java) }
         findViewById<Button>(R.id.choiceBtn).setOnClickListener { open(ChoiceActivity::class.java) }
         findViewById<Button>(R.id.dictationBtn).setOnClickListener { open(MainActivity::class.java) }
-        findViewById<Button>(R.id.wordsBtn).setOnClickListener { open(WordListActivity::class.java) }
-        findViewById<Button>(R.id.scanBtn).setOnClickListener { open(ScanActivity::class.java) }
+        findViewById<Button>(R.id.wordsBtn).setOnClickListener {
+            ParentLock.unlock(this, store) { open(WordListActivity::class.java) }
+        }
+        findViewById<Button>(R.id.scanBtn).setOnClickListener {
+            ParentLock.unlock(this, store) { open(ScanActivity::class.java) }
+        }
         reviewBtn.setOnClickListener { chooseReviewGame() }
+        gameButtons[PlayLimit.Game.SCRAMBLE] = findViewById(R.id.scrambleBtn)
+        gameButtons[PlayLimit.Game.CHOICE] = findViewById(R.id.choiceBtn)
+        gameButtons[PlayLimit.Game.DICTATION] = findViewById(R.id.dictationBtn)
 
         update = InAppUpdate(this)
         update.checkForUpdate()
@@ -59,6 +67,10 @@ class HomeActivity : AppCompatActivity() {
             0 -> "No words in the list"
             1 -> "1 word in the list"
             else -> "$n words in the list"
+        }
+        for ((game, b) in gameButtons) {
+            b.text = PlayLimit.label(store, game)
+            b.alpha = if (store.playsLeft(game.key) == 0) 0.5f else 1f
         }
         val due = Stats.dueCount(store)
         reviewBtn.visibility = if (due == 0) android.view.View.GONE else android.view.View.VISIBLE
@@ -85,7 +97,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun chooseReviewGame() {
-        val labels = arrayOf("🔤  Scrambled Letters", "🎯  Pick the Spelling", "✏️  Write the Word")
+        val labels = PlayLimit.Game.values().map { PlayLimit.label(store, it) }.toTypedArray()
         val classes = arrayOf(
             ScrambleActivity::class.java, ChoiceActivity::class.java, MainActivity::class.java
         )

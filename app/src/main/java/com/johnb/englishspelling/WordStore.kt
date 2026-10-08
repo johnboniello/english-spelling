@@ -198,6 +198,42 @@ class WordStore(context: Context) {
 
     fun saveDeletedWordsFromSync(list: List<String>) = writeDeletedWords(list)
 
+    // ---- game limits (see PlayLimit) ----
+    // Plays are only counted while a game is limited, and each count belongs to
+    // one week's list (wordsReplacedAt), so a new week starts it over.
+
+    /** Rounds allowed per week's list; 0 = unlimited. */
+    fun playLimit(game: String): Int = prefs.getInt(KEY_LIMIT + game, 0)
+
+    fun setPlayLimit(game: String, limit: Int) {
+        prefs.edit().putInt(KEY_LIMIT + game, limit).apply()
+    }
+
+    private fun playsUsed(game: String): Int =
+        if (prefs.getLong(KEY_PLAYS_WEEK + game, -1L) == wordsReplacedAt()) prefs.getInt(KEY_PLAYS_USED + game, 0) else 0
+
+    /** Rounds left this week, or null when the game is unlimited. */
+    fun playsLeft(game: String): Int? {
+        val limit = playLimit(game)
+        return if (limit == 0) null else (limit - playsUsed(game)).coerceAtLeast(0)
+    }
+
+    fun usePlay(game: String) {
+        if (playLimit(game) == 0) return
+        prefs.edit()
+            .putLong(KEY_PLAYS_WEEK + game, wordsReplacedAt())
+            .putInt(KEY_PLAYS_USED + game, playsUsed(game) + 1)
+            .apply()
+    }
+
+    // ---- parent PIN (see ParentLock); a hash, never the PIN itself ----
+
+    fun parentPinHash(): String? = prefs.getString(KEY_PIN, null)
+
+    fun setParentPinHash(hash: String?) {
+        prefs.edit().apply { if (hash == null) remove(KEY_PIN) else putString(KEY_PIN, hash) }.apply()
+    }
+
     // ---- review stats ("Words to review") ----
 
     fun stats(): MutableMap<String, Stats.Entry> = Stats.fromJson(prefs.getString(KEY_STATS, null))
@@ -261,5 +297,9 @@ class WordStore(context: Context) {
         private const val KEY_SYNCED_AT = "last_synced_at"
         private const val KEY_CODE = "family_code"
         private const val KEY_RATE = "rate"
+        private const val KEY_LIMIT = "play_limit_"
+        private const val KEY_PIN = "parent_pin_hash"
+        private const val KEY_PLAYS_WEEK = "plays_week_"
+        private const val KEY_PLAYS_USED = "plays_used_"
     }
 }

@@ -21,8 +21,8 @@ android {
         applicationId = "com.johnb.englishspelling"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
 
         // The bundled OCR model ships native libs for every ABI; real phones are ARM.
         // Dropping x86/x86_64 roughly halves the APK. (Re-add them for an emulator.)

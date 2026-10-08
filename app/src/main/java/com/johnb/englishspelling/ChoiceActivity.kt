@@ -35,6 +35,8 @@ class ChoiceActivity : AppCompatActivity() {
     private var correctIndex = -1
     private var solved = false
     private var wrongThisWord = false
+    private val charge by lazy { RoundCharge(store, PlayLimit.Game.CHOICE) }
+    private lateinit var defaultEmptyText: CharSequence
 
     private val reviewMode by lazy { intent.getBooleanExtra(HomeActivity.EXTRA_REVIEW, false) }
 
@@ -65,6 +67,7 @@ class ChoiceActivity : AppCompatActivity() {
         progressView = findViewById(R.id.progressView)
         instructionView = findViewById(R.id.instructionView)
         emptyView = findViewById(R.id.emptyView)
+        defaultEmptyText = emptyView.text
         listenBtn = findViewById(R.id.listenBtn)
         feedbackView = findViewById(R.id.feedbackView)
         nextBtn = findViewById(R.id.nextBtn)
@@ -97,8 +100,15 @@ class ChoiceActivity : AppCompatActivity() {
         val latest = if (reviewMode) Stats.poolWords(store).toMutableList() else store.words()
         if (latest != words || order.isEmpty()) {
             words = latest
+            emptyView.text = defaultEmptyText
             if (words.isEmpty()) {
                 if (reviewMode) emptyView.text = "No words to review right now. 🎉"
+                showEmpty(true)
+                order = mutableListOf()
+                return
+            }
+            if (charge.blocked()) {
+                emptyView.text = PlayLimit.blockedText(store, PlayLimit.Game.CHOICE)
                 showEmpty(true)
                 order = mutableListOf()
                 return
@@ -135,6 +145,7 @@ class ChoiceActivity : AppCompatActivity() {
             // reaches "Words to review") and re-asks a solved word (scored twice).
             outState.putBoolean(KEY_SOLVED, solved)
             outState.putBoolean(KEY_WRONG, wrongThisWord)
+            charge.save(outState)
         }
     }
 
@@ -154,6 +165,7 @@ class ChoiceActivity : AppCompatActivity() {
         pos = savedPos
         score = state.getInt(KEY_SCORE, 0)
         aided = state.getInt(KEY_AIDED, 0)
+        charge.restore(state)
         showEmpty(false)
         setupRound()
         wrongThisWord = state.getBoolean(KEY_WRONG, false)
@@ -222,6 +234,7 @@ class ChoiceActivity : AppCompatActivity() {
 
     private fun onPick(i: Int) {
         if (solved || !options[i].isEnabled) return
+        charge.charge()
         if (i == correctIndex) {
             showSolved()
             if (wrongThisWord) aided++ else score++
@@ -244,19 +257,15 @@ class ChoiceActivity : AppCompatActivity() {
 
     private fun nextWord() {
         if (pos + 1 >= order.size) {
-            AlertDialog.Builder(this)
-                .setTitle("All done!")
-                .setMessage("Without help: $score / ${order.size}\nWith help: $aided")
-                .setPositiveButton("Play again") { _, _ ->
-                    order.shuffle()
-                    pos = 0
-                    score = 0
-                    aided = 0
-                    setupRound()
-                }
-                .setNegativeButton("Back", null)
-                .setCancelable(false)
-                .show()
+            PlayLimit.showEndDialog(this, store, PlayLimit.Game.CHOICE, "All done!",
+                "Without help: $score / ${order.size}\nWith help: $aided", "Back") {
+                charge.reset()
+                order.shuffle()
+                pos = 0
+                score = 0
+                aided = 0
+                setupRound()
+            }
             return
         }
         pos++

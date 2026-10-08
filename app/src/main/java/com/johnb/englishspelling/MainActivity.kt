@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity() {
     private var revealCount = 0
     private var attempts = 0
     private var answerRevealed = false
+    private val charge by lazy { RoundCharge(store, PlayLimit.Game.DICTATION) }
 
     private val reviewMode by lazy { intent.getBooleanExtra(HomeActivity.EXTRA_REVIEW, false) }
 
@@ -202,6 +203,7 @@ class MainActivity : AppCompatActivity() {
             outState.putBoolean(KEY_REVEALED, answerRevealed)
             outState.putBoolean(KEY_SCORED, scoredThisWord)
             outState.putBoolean(KEY_RECORDED, recordedThisWord)
+            charge.save(outState)
         }
     }
 
@@ -220,6 +222,7 @@ class MainActivity : AppCompatActivity() {
         pos = savedPos
         score = state.getInt(KEY_SCORE, 0)
         aidedCount = state.getInt(KEY_AIDED, 0)
+        charge.restore(state)
         guess.append(state.getString(KEY_GUESS, ""))
 
         emptyView.visibility = View.GONE
@@ -248,7 +251,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun openWordList() {
-        startActivity(Intent(this, WordListActivity::class.java))
+        ParentLock.unlock(this, store) { startActivity(Intent(this, WordListActivity::class.java)) }
     }
 
     private fun initRound() {
@@ -271,6 +274,14 @@ class MainActivity : AppCompatActivity() {
             emptyView.visibility = View.VISIBLE
             emptyAddBtn.visibility = if (reviewMode) View.GONE else View.VISIBLE
             practiceBox.visibility = View.GONE
+            return
+        }
+        if (charge.blocked()) {
+            emptyView.text = PlayLimit.blockedText(store, PlayLimit.Game.DICTATION)
+            emptyView.visibility = View.VISIBLE
+            emptyAddBtn.visibility = View.GONE
+            practiceBox.visibility = View.GONE
+            order = mutableListOf()
             return
         }
         emptyView.visibility = View.GONE
@@ -385,6 +396,7 @@ class MainActivity : AppCompatActivity() {
             toast("Type your spelling first.")
             return
         }
+        charge.charge()
         val res = SpellingChecker.check(currentWord(), guess.toString())
         yourView.text = renderRow(res, targetRow = false)
 
@@ -452,13 +464,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showEndDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("All done!")
-            .setMessage("Without help: $score / ${order.size}\nWith help: $aidedCount")
-            .setPositiveButton("Play again") { _, _ -> initRound() }
-            .setNegativeButton("Close", null)
-            .setCancelable(false)
-            .show()
+        PlayLimit.showEndDialog(this, store, PlayLimit.Game.DICTATION, "All done!",
+            "Without help: $score / ${order.size}\nWith help: $aidedCount", "Close") {
+            charge.reset()
+            initRound()
+        }
     }
 
     private fun greenWord(w: String): CharSequence {
